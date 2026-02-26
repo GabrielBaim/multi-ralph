@@ -8,14 +8,9 @@ import { join, relative } from "node:path";
  */
 export function scanProjectClaudeMdFiles(projectDir: string, ralphDir: string): void {
   try {
-    // Skip the root CLAUDE.md - each loop has its own CLAUDE.md with specific instructions
-    // We only want CLAUDE.md files from subdirectories (apps, packages, modules, etc.)
-    const claudeFiles = findClaudeMdFiles(projectDir)
-      .filter(f => {
-        const relPath = relative(projectDir, f);
-        // Exclude if it's the root CLAUDE.md (no "/" in relative path)
-        return relPath.includes("/");
-      });
+    // Include ALL CLAUDE.md files from projectDir - loop's own CLAUDE.md is in ralphDir
+    // so there's no collision. Root CLAUDE.md contains essential project-level context.
+    const claudeFiles = findClaudeMdFiles(projectDir);
 
     if (claudeFiles.length === 0) return;
 

@@ -59,6 +59,22 @@ APPEND to progress.txt (never replace, always append):
 
 The learnings section is critical - it helps future iterations avoid repeating mistakes and understand the codebase better.
 
+## Context Handoff Mechanism
+
+Context flows between iterations through three mechanisms:
+
+1. **progress.txt** — Contains `## Codebase Patterns` at the top with reusable learnings, plus iteration-by-iteration logs. READ THIS FIRST on every iteration.
+
+2. **project-context.md** — Consolidated view of ALL CLAUDE.md files in the project (root and subdirectories). This gives you a warm cache of project knowledge without scanning the entire codebase.
+
+3. **context.md** (optional) — If present alongside this file, it contains explicit handoff notes from the previous iteration. Check for a `## Previous Iteration Failure` section if present.
+
+**On each iteration:**
+- Read progress.txt Codebase Patterns section first
+- Check for context.md if it exists
+- Reference project-context.md for project-wide conventions
+- Append new learnings to progress.txt
+
 ## Consolidate Patterns
 
 If you discover a **reusable pattern** that future iterations should know, add it to the `## Codebase Patterns` section at the TOP of progress.txt (create it if it doesn't exist). This section should consolidate the most important learnings:

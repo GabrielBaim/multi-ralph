@@ -16,6 +16,84 @@ import { openTerminalWithClaude } from "./terminal.js";
 import { scanProjectClaudeMdFiles } from "./context-scanner.js";
 import type { RalphLoop, OnCompleteHook } from "../types.js";
 
+/**
+ * Scans project directory to detect initial Codebase Patterns.
+ * Pre-populates progress.txt with detected tooling and conventions.
+ */
+function initializeProgressWithPatterns(projectDir: string): string {
+  const patterns: string[] = [];
+
+  // Detect package manager
+  if (existsSync(join(projectDir, "pnpm-lock.yaml"))) {
+    patterns.push("- Package manager: pnpm (use pnpm add/remove)");
+  } else if (existsSync(join(projectDir, "bun.lockb"))) {
+    patterns.push("- Package manager: bun (use bun add/remove)");
+  } else if (existsSync(join(projectDir, "yarn.lock"))) {
+    patterns.push("- Package manager: yarn (use yarn add/remove)");
+  } else if (existsSync(join(projectDir, "package-lock.json"))) {
+    patterns.push("- Package manager: npm (use npm install/uninstall)");
+  }
+
+  // Detect language
+  if (existsSync(join(projectDir, "tsconfig.json"))) {
+    patterns.push("- Language: TypeScript (strict typing required)");
+  }
+
+  // Detect framework from package.json
+  const pkgPath = join(projectDir, "package.json");
+  if (existsSync(pkgPath)) {
+    try {
+      const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+      const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+
+      if (deps.next) patterns.push("- Framework: Next.js");
+      else if (deps.react) patterns.push("- Framework: React");
+      else if (deps.vue) patterns.push("- Framework: Vue");
+      else if (deps.svelte) patterns.push("- Framework: Svelte");
+      else if (deps.express) patterns.push("- Framework: Express");
+      else if (deps.hono) patterns.push("- Framework: Hono");
+      else if (deps.fastify) patterns.push("- Framework: Fastify");
+
+      // Testing
+      if (deps.vitest) patterns.push("- Testing: vitest (run with bun test or vitest)");
+      else if (deps.jest) patterns.push("- Testing: jest (run with npm test)");
+      else if (deps.mocha) patterns.push("- Testing: mocha");
+
+      // Linting
+      if (deps.biome) patterns.push("- Linting: biome (run with biome check)");
+      else if (deps.eslint) patterns.push("- Linting: eslint (run with eslint)");
+
+      // Build tools
+      if (deps.turbo) patterns.push("- Monorepo: Turborepo");
+      if (deps.bun) patterns.push("- Runtime: bun");
+    } catch {
+      // Invalid package.json, skip
+    }
+  }
+
+  // Detect test configs
+  if (existsSync(join(projectDir, "vitest.config.ts")) || existsSync(join(projectDir, "vitest.config.js"))) {
+    if (!patterns.some(p => p.includes("vitest"))) patterns.push("- Testing: vitest");
+  }
+  if (existsSync(join(projectDir, "jest.config.ts")) || existsSync(join(projectDir, "jest.config.js"))) {
+    if (!patterns.some(p => p.includes("jest"))) patterns.push("- Testing: jest");
+  }
+
+  // Detect lint configs
+  if (existsSync(join(projectDir, "biome.json"))) {
+    if (!patterns.some(p => p.includes("biome"))) patterns.push("- Linting: biome");
+  }
+  if (existsSync(join(projectDir, ".eslintrc")) || existsSync(join(projectDir, ".eslintrc.json"))) {
+    if (!patterns.some(p => p.includes("eslint"))) patterns.push("- Linting: eslint");
+  }
+
+  const patternsSection = patterns.length > 0
+    ? `## Codebase Patterns\n${patterns.join("\n")}\n\n`
+    : "";
+
+  return patternsSection;
+}
+
 const MULTI_RALPH_ROOT = join(import.meta.dirname ?? ".", "../../../..");
 
 export const app = new Hono();
@@ -110,11 +188,12 @@ app.post("/loops", async (c) => {
     }
   }
 
-  // Initialize progress.txt in the loop subdirectory
+  // Initialize progress.txt with detected Codebase Patterns
   const { writeFileSync } = await import("node:fs");
+  const patternsSection = initializeProgressWithPatterns(projectDir);
   writeFileSync(
     join(ralphDir, "progress.txt"),
-    `# Ralph Progress Log\nStarted: ${new Date().toISOString()}\n---\n`
+    `${patternsSection}# Ralph Progress Log\nStarted: ${new Date().toISOString()}\n---\n`
   );
 
   // Build project-context.md (warm cache of all CLAUDE.md files in the project)
