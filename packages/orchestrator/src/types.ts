@@ -31,6 +31,24 @@ export interface LoopMetrics {
   tokensPerIteration: number[];    // tokens estimated per iteration
   totalTokens: number;
   estimatedCostUsd: number;
+  // TDD & Agile metrics
+  testCoverage?: number;           // percentage (0-100)
+  testFirstCompliance?: number;    // percentage of stories where tests written first
+  failureReasons: Record<string, number>; // category → count
+  velocity: number;                // stories completed per iteration
+  cumulativeFlowData: CumulativeFlowPoint[]; // for CFD visualization
+  timePerStory: Record<string, number>; // storyId → ms spent
+  rollbackCount: number;           // number of rollback/undo operations
+  storiesCompleted: number;        // total stories marked as passing
+  storiesInProgress: number;       // stories currently being worked on
+}
+
+export interface CumulativeFlowPoint {
+  timestamp: string;               // ISO timestamp
+  todo: number;                    // stories in todo
+  inProgress: number;              // stories in progress
+  done: number;                    // stories completed
+  blocked: number;                 // stories blocked
 }
 
 export interface NormalizedPrd {

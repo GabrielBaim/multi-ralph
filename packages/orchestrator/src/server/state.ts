@@ -63,6 +63,15 @@ export function loadState(): void {
       tokensPerIteration: [],
       totalTokens: 0,
       estimatedCostUsd: 0,
+      testCoverage: 0,
+      testFirstCompliance: 0,
+      failureReasons: {},
+      velocity: 0,
+      cumulativeFlowData: [],
+      timePerStory: {},
+      rollbackCount: 0,
+      storiesCompleted: 0,
+      storiesInProgress: 0,
     };
     for (const [id, loop] of loops) {
       const patch: Partial<typeof loop> = {};
