@@ -4,9 +4,13 @@ import { existsSync, readFileSync, copyFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { getLoop, updateLoop } from "./state.js";
 import { broadcast } from "./sse.js";
+import type { CumulativeFlowPoint } from "../types.js";
 
 const processes = new Map<string, ChildProcess>();
 const MAX_OUTPUT_LINES = 200;
+
+// Track story start times per loop
+const storyStartTimes = new Map<string, Map<string, number>>();
 
 function syncMetricsToFile(loopId: string): void {
   const loop = getLoop(loopId);
@@ -155,6 +159,85 @@ export function startLoop(loopId: string): StartResult {
           const storyId = storyAttemptMatch[1];
           metrics.storyAttempts = { ...metrics.storyAttempts };
           metrics.storyAttempts[storyId] = (metrics.storyAttempts[storyId] || 0) + 1;
+          // Track story start time
+          if (!storyStartTimes.has(loopId)) {
+            storyStartTimes.set(loopId, new Map());
+          }
+          storyStartTimes.get(loopId)!.set(storyId, Date.now());
+          updateLoop(loopId, { metrics });
+          syncMetricsToFile(loopId);
+        }
+      }
+
+      // Parse test coverage (e.g., "Test coverage: 85%")
+      const coverageMatch = line.match(/Test coverage: (\d+(?:\.\d+)?)\s*%?/i);
+      if (coverageMatch) {
+        const currentLoop = getLoop(loopId);
+        if (currentLoop) {
+          const metrics = { ...currentLoop.metrics };
+          metrics.testCoverage = parseFloat(coverageMatch[1]);
+          updateLoop(loopId, { metrics });
+          syncMetricsToFile(loopId);
+        }
+      }
+
+      // Parse test-first compliance (e.g., "Test-first compliance: 75%")
+      const testFirstMatch = line.match(/Test-first compliance: (\d+(?:\.\d+)?)\s*%?/i);
+      if (testFirstMatch) {
+        const currentLoop = getLoop(loopId);
+        if (currentLoop) {
+          const metrics = { ...currentLoop.metrics };
+          metrics.testFirstCompliance = parseFloat(testFirstMatch[1]);
+          updateLoop(loopId, { metrics });
+          syncMetricsToFile(loopId);
+        }
+      }
+
+      // Parse failure reasons (e.g., "Failure: syntax_error in story-1")
+      const failureMatch = line.match(/Failure: (\w+) in (?:story )?([\w-]+)/i);
+      if (failureMatch) {
+        const currentLoop = getLoop(loopId);
+        if (currentLoop) {
+          const metrics = { ...currentLoop.metrics };
+          const reason = failureMatch[1].toLowerCase();
+          metrics.failureReasons = { ...metrics.failureReasons };
+          metrics.failureReasons[reason] = (metrics.failureReasons[reason] || 0) + 1;
+          updateLoop(loopId, { metrics });
+          syncMetricsToFile(loopId);
+        }
+      }
+
+      // Parse rollback detection (e.g., "Rollback:" or "Reverting changes")
+      if (/Rollback:|Reverting changes|Undoing/i.test(line)) {
+        const currentLoop = getLoop(loopId);
+        if (currentLoop) {
+          const metrics = { ...currentLoop.metrics };
+          metrics.rollbackCount = (metrics.rollbackCount || 0) + 1;
+          updateLoop(loopId, { metrics });
+          syncMetricsToFile(loopId);
+        }
+      }
+
+      // Parse story completion (e.g., "Story story-1: PASSED" or "Story completed: story-1")
+      const storyCompleteMatch = line.match(/Story (?:completed: )?([\w-]+)\s*:\s*(?:PASSED|✓|passed)/i);
+      if (storyCompleteMatch) {
+        const currentLoop = getLoop(loopId);
+        if (currentLoop) {
+          const storyId = storyCompleteMatch[1];
+          const metrics = { ...currentLoop.metrics };
+          metrics.storiesCompleted = (metrics.storiesCompleted || 0) + 1;
+          // Calculate time per story
+          const startTimes = storyStartTimes.get(loopId);
+          if (startTimes?.has(storyId)) {
+            const elapsed = Date.now() - startTimes.get(storyId)!;
+            metrics.timePerStory = { ...metrics.timePerStory };
+            metrics.timePerStory[storyId] = elapsed;
+          }
+          // Update velocity (stories completed / current iteration)
+          const iteration = currentLoop.currentIteration || 1;
+          metrics.velocity = metrics.storiesCompleted / iteration;
+          // Update cumulative flow data
+          addCumulativeFlowPoint(currentLoop, metrics);
           updateLoop(loopId, { metrics });
           syncMetricsToFile(loopId);
         }
@@ -168,6 +251,7 @@ export function startLoop(loopId: string): StartResult {
 
   child.on("close", (code) => {
     processes.delete(loopId);
+    storyStartTimes.delete(loopId); // Cleanup story timing data
     const current = getLoop(loopId);
     if (current && current.status === "running") {
       const newStatus = code === 0 ? "completed" : "failed";
@@ -230,6 +314,7 @@ export function cleanupAll(): void {
     child.kill("SIGTERM");
     processes.delete(id);
   }
+  storyStartTimes.clear(); // Cleanup all story timing data
 }
 
 function executeOnCompleteHook(loopId: string): void {
@@ -277,3 +362,25 @@ function executeOnCompleteHook(loopId: string): void {
     console.error(`Hook execution failed for loop ${loopId}:`, err.message);
   }
 }
+
+import type { RalphLoop } from "../types.js";
+
+function addCumulativeFlowPoint(loop: RalphLoop, metrics: LoopMetrics): void {
+  const totalStories = loop.prd?.stories.length || 0;
+  const done = metrics.storiesCompleted || 0;
+  const inProgress = Object.keys(metrics.storyAttempts || {}).length - done;
+  const blocked = Object.keys(metrics.failureReasons || {}).length;
+  const todo = Math.max(0, totalStories - done - inProgress);
+
+  const point: CumulativeFlowPoint = {
+    timestamp: new Date().toISOString(),
+    todo,
+    inProgress: Math.max(0, inProgress),
+    done,
+    blocked,
+  };
+
+  metrics.cumulativeFlowData = [...(metrics.cumulativeFlowData || []), point];
+}
+
+type LoopMetrics = import("../types.js").LoopMetrics;
