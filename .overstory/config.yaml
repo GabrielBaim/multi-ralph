@@ -3,8 +3,8 @@
 
 project:
   name: multi-ralph
-  root: /home/baimast/Documentos/projeto/multi-ralph
-  canonicalBranch: master
+  root: /home/baimast/Documentos/projeto/ralph
+  canonicalBranch: main
   qualityGates:
     - name: Tests
       command: bun test

@@ -7,7 +7,7 @@ This is a multi-package project managed with pnpm workspaces.
 ## Project Structure
 
 ```
-multi-ralph/
+ralph/
 ├── packages/     # Individual packages/modules
 ├── scripts/      # Build and utility scripts
 └── .claude/      # Claude Code configuration and skills

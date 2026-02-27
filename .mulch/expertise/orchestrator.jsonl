@@ -1,0 +1,1 @@
+{"type":"pattern","name":"dashboard-metrics-extension","description":"Pattern for extending dashboard metrics: 1) Extend LoopMetrics interface in types.ts 2) Add defaults in state.ts 3) Add parsing in process-manager.ts 4) Add visualizations in dashboard.ts","classification":"tactical","recorded_at":"2026-02-27T00:09:12.997Z","id":"mx-7ff0cc"}

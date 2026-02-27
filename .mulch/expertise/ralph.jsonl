@@ -1,0 +1,1 @@
+{"type":"pattern","name":"stalled-lead-recovery","description":"When leads stall without producing work, use 'ov stop' to verify zombie status, then respawn. For simple tasks, explicitly instruct leads to do work directly without spawning workers.","classification":"tactical","recorded_at":"2026-02-27T00:32:34.639Z","id":"mx-e4902a"}
