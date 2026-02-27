@@ -100,17 +100,37 @@ Ralph will automatically skip stories whose dependencies haven't passed yet.
 
 ---
 
-## Acceptance Criteria: Must Be Verifiable
+## TDD Enforcement: Mandatory Test-First
+
+**Test-Driven Development is MANDATORY for all Ralph stories.**
+
+Every story MUST follow the red-green-refactor cycle:
+
+1. **RED:** Write a failing test BEFORE any implementation
+2. **GREEN:** Write minimal code to make the test pass
+3. **REFACTOR:** Clean up while keeping tests green
+
+### Required Criteria for Every Story
+
+Every user story MUST include these TDD criteria:
+
+```
+"Write failing test for [specific behavior]"
+"All tests pass"
+```
+
+### Acceptance Criteria: Must Be Verifiable
 
 Each criterion must be something Ralph can CHECK, not something vague.
 
 ### Good criteria (verifiable):
 
+- "Write failing test for status column existence"
 - "Add `status` column to tasks table with default 'pending'"
 - "Filter dropdown has options: All, Active, Completed"
 - "Clicking delete shows confirmation dialog"
 - "Typecheck passes"
-- "Tests pass"
+- "All tests pass"
 
 ### Bad criteria (vague):
 
@@ -119,16 +139,11 @@ Each criterion must be something Ralph can CHECK, not something vague.
 - "Good UX"
 - "Handles edge cases"
 
-### Always include as final criterion:
+### Always include as final criteria:
 
 ```
 "Typecheck passes"
-```
-
-For stories with testable logic, also include:
-
-```
-"Tests pass"
+"All tests pass"
 ```
 
 ### For stories that change UI, also include:
@@ -203,8 +218,10 @@ Add ability to mark tasks with different statuses.
       "title": "Add status field to tasks table",
       "description": "As a developer, I need to store task status in the database.",
       "acceptanceCriteria": [
+        "Write failing test for status field existence",
         "Add status column: 'pending' | 'in_progress' | 'done' (default 'pending')",
         "Generate and run migration successfully",
+        "All tests pass",
         "Typecheck passes"
       ],
       "priority": 1,
@@ -216,8 +233,10 @@ Add ability to mark tasks with different statuses.
       "title": "Display status badge on task cards",
       "description": "As a user, I want to see task status at a glance.",
       "acceptanceCriteria": [
+        "Write failing test for status badge rendering",
         "Each task card shows colored status badge",
         "Badge colors: gray=pending, blue=in_progress, green=done",
+        "All tests pass",
         "Typecheck passes",
         "Verify in browser using dev-browser skill"
       ],
@@ -230,9 +249,11 @@ Add ability to mark tasks with different statuses.
       "title": "Add status toggle to task list rows",
       "description": "As a user, I want to change task status directly from the list.",
       "acceptanceCriteria": [
+        "Write failing test for status toggle functionality",
         "Each row has status dropdown or toggle",
         "Changing status saves immediately",
         "UI updates without page refresh",
+        "All tests pass",
         "Typecheck passes",
         "Verify in browser using dev-browser skill"
       ],
@@ -245,8 +266,10 @@ Add ability to mark tasks with different statuses.
       "title": "Filter tasks by status",
       "description": "As a user, I want to filter the list to see only certain statuses.",
       "acceptanceCriteria": [
+        "Write failing test for filter functionality",
         "Filter dropdown: All | Pending | In Progress | Done",
         "Filter persists in URL params",
+        "All tests pass",
         "Typecheck passes",
         "Verify in browser using dev-browser skill"
       ],
@@ -280,6 +303,8 @@ Add ability to mark tasks with different statuses.
 Before writing prd.json, verify:
 
 - [ ] **Previous run archived** (if prd.json exists with different branchName, archive it first)
+- [ ] **TDD enforced: Every story has "Write failing test for X" as first criterion**
+- [ ] **TDD enforced: Every story has "All tests pass" as criterion**
 - [ ] Each story is completable in one iteration (small enough)
 - [ ] Stories are ordered by dependency (schema to backend to UI)
 - [ ] Every story has "Typecheck passes" as criterion

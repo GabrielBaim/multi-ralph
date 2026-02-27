@@ -4,6 +4,50 @@ You are an autonomous coding agent working on a software project.
 
 **Loop isolation:** This CLAUDE.md, `prd.json`, and `progress.txt` all live in the same loop directory. Each loop has its own isolated copy of these files — do NOT read or write files from other loop directories.
 
+## CRITICAL: TDD is MANDATORY
+
+**Test-Driven Development is NOT optional.** You MUST follow the red-green-refactor cycle:
+
+1. **RED:** Write a FAILING test BEFORE any implementation code
+2. **GREEN:** Write the MINIMAL code to make the test pass
+3. **REFACTOR:** Clean up the code while keeping tests green
+
+### TDD Workflow Per Story
+
+Before implementing ANY story:
+
+1. **Identify testable behavior** from the acceptance criteria
+2. **Write a failing test** that exercises that behavior
+3. **Run the test** and confirm it FAILS (red)
+4. **Implement** only enough code to make the test pass
+5. **Run the test** and confirm it PASSES (green)
+6. **Refactor** if needed, running tests after each change
+7. **Run full test suite** to ensure no regressions
+
+### Verification Commands
+
+Every story with tests MUST include verification:
+
+```json
+{
+  "verification": {
+    "command": "npm test",
+    "expect": "exit 0"
+  }
+}
+```
+
+The verification command runs AFTER marking `passes: true`. If tests fail, `passes` reverts to `false` and you must fix the issue.
+
+### No Tests = No Implementation
+
+If you cannot write a test for a story, you MUST:
+- Document why TDD is not applicable (e.g., pure CSS styling)
+- Provide alternative verification (e.g., visual testing, manual steps)
+- Get explicit approval before proceeding without tests
+
+**Stories without tests will be rejected.**
+
 ## CRITICAL: Single Story Rule
 
 You MUST complete EXACTLY ONE story per iteration.
@@ -31,12 +75,17 @@ If you complete a story and there are more to do, STOP - the next iteration will
 4. Pick the **highest priority** user story where:
    - `passes: false`
    - All stories listed in `dependsOn` (if any) already have `passes: true`
-5. Implement that single user story
-6. Run quality checks (e.g., typecheck, lint, test - use whatever your project requires)
-7. Update CLAUDE.md files if you discover reusable patterns (see below)
-8. If checks pass, commit ALL changes with message: `feat: [Story ID] - [Story Title]`
-9. Update the PRD to set `passes: true` for the completed story
-10. Append your progress to `progress.txt`
+5. **Write a failing test** for the story (TDD: RED phase)
+6. **Implement** the story to make the test pass (TDD: GREEN phase)
+7. Run quality checks:
+   - `npm test` (or project test command) - MUST pass
+   - `npm run typecheck` - MUST pass
+   - `npm run lint` - MUST pass
+8. Update CLAUDE.md files if you discover reusable patterns (see below)
+9. If ALL checks pass, commit ALL changes with message: `feat: [Story ID] - [Story Title]`
+10. Update the PRD to set `passes: true` for the completed story
+11. **Verification runs automatically**: If the story has a `verification` command, it will execute. If tests fail, `passes` reverts to `false`.
+12. Append your progress to `progress.txt`
 
 ## Story Dependencies
 
@@ -118,10 +167,21 @@ Only update CLAUDE.md if you have **genuinely reusable knowledge** that would he
 
 ## Quality Requirements
 
+- **TDD is MANDATORY**: You MUST write tests BEFORE implementation (red-green-refactor)
+- **Tests MUST pass**: ALL commits must pass the full test suite
 - ALL commits must pass your project's quality checks (typecheck, lint, test)
-- Do NOT commit broken code
+- Do NOT commit broken code or code without tests
 - Keep changes focused and minimal
 - Follow existing code patterns
+
+### Quality Gate Order
+
+1. Write failing test first
+2. Implement to make test pass
+3. Run `npm test` (or project test command) - MUST pass
+4. Run `npm run typecheck` (or equivalent) - MUST pass
+5. Run `npm run lint` (or equivalent) - MUST pass
+6. Only then commit with message: `feat: [Story ID] - [Story Title]`
 
 ## Browser Testing (If Available)
 

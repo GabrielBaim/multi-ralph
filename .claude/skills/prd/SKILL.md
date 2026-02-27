@@ -87,16 +87,22 @@ Each story should be small enough to implement in one focused session.
 
 **Acceptance Criteria:**
 
+- [ ] Write failing test for [specific behavior]
+- [ ] Implement [feature] to make test pass
 - [ ] Specific verifiable criterion
 - [ ] Another criterion
+- [ ] All tests pass
 - [ ] Typecheck/lint passes
 - [ ] **[UI stories only]** Verify in browser using dev-browser skill
 ```
 
 **Important:**
 
+- **TDD is MANDATORY:** Every story MUST include a test-first criterion. Write the failing test BEFORE implementation.
+- **Red-Green-Refactor cycle:** The acceptance criteria must enforce: 1) Write failing test, 2) Make it pass with minimal code, 3) Refactor if needed.
 - Acceptance criteria must be verifiable, not vague. "Works correctly" is bad. "Button shows confirmation dialog before deleting" is good.
 - **For any story with UI changes:** Always include "Verify in browser using dev-browser skill" as acceptance criteria. This ensures visual verification of frontend work.
+- **Every story must include "All tests pass" as a criterion** - this ensures the test suite stays green.
 
 ### 4. Functional Requirements
 
@@ -180,8 +186,10 @@ Add priority levels to tasks so users can focus on what matters most. Tasks can 
 
 **Acceptance Criteria:**
 
+- [ ] Write failing test for priority field existence
 - [ ] Add priority column to tasks table: 'high' | 'medium' | 'low' (default 'medium')
 - [ ] Generate and run migration successfully
+- [ ] All tests pass
 - [ ] Typecheck passes
 
 ### US-002: Display priority indicator on task cards
@@ -190,8 +198,10 @@ Add priority levels to tasks so users can focus on what matters most. Tasks can 
 
 **Acceptance Criteria:**
 
+- [ ] Write failing test for priority badge rendering
 - [ ] Each task card shows colored priority badge (red=high, yellow=medium, gray=low)
 - [ ] Priority visible without hovering or clicking
+- [ ] All tests pass
 - [ ] Typecheck passes
 - [ ] Verify in browser using dev-browser skill
 
@@ -201,9 +211,11 @@ Add priority levels to tasks so users can focus on what matters most. Tasks can 
 
 **Acceptance Criteria:**
 
+- [ ] Write failing test for priority selection functionality
 - [ ] Priority dropdown in task edit modal
 - [ ] Shows current priority as selected
 - [ ] Saves immediately on selection change
+- [ ] All tests pass
 - [ ] Typecheck passes
 - [ ] Verify in browser using dev-browser skill
 
@@ -213,9 +225,11 @@ Add priority levels to tasks so users can focus on what matters most. Tasks can 
 
 **Acceptance Criteria:**
 
+- [ ] Write failing test for filter functionality
 - [ ] Filter dropdown with options: All | High | Medium | Low
 - [ ] Filter persists in URL params
 - [ ] Empty state message when no tasks match filter
+- [ ] All tests pass
 - [ ] Typecheck passes
 - [ ] Verify in browser using dev-browser skill
 
@@ -253,12 +267,47 @@ Add priority levels to tasks so users can focus on what matters most. Tasks can 
 
 ---
 
+## TDD Requirements
+
+**Test-Driven Development is MANDATORY for all stories.** Every PRD must enforce the red-green-refactor cycle:
+
+1. **Red:** Write a failing test before any implementation code
+2. **Green:** Write the minimal code to make the test pass
+3. **Refactor:** Clean up the code while keeping tests green
+
+### Required Acceptance Criteria for Every Story
+
+Every user story MUST include these TDD criteria:
+
+```markdown
+- [ ] Write failing test for [specific behavior being implemented]
+- [ ] All tests pass
+```
+
+### Verification Commands
+
+Include verification commands in the PRD when tests need to run:
+
+```json
+{
+  "verification": {
+    "command": "npm test",
+    "expect": "exit 0"
+  }
+}
+```
+
+### No Implementation Without Tests
+
+If a story cannot be test-driven (e.g., pure UI styling with no logic), document why TDD is not applicable and provide alternative verification (e.g., visual regression, manual testing).
+
 ## Checklist
 
 Before saving the PRD:
 
 - [ ] Asked clarifying questions with lettered options
 - [ ] Incorporated user's answers
+- [ ] **Every story has TDD criteria (failing test first, all tests pass)**
 - [ ] User stories are small and specific
 - [ ] Functional requirements are numbered and unambiguous
 - [ ] Non-goals section defines clear boundaries
